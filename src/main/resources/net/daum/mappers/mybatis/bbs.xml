@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Bbs">
+  <insert id="bbs_in" parameterType="bbs">
+    insert into bbs (bbs_no, bbs_name, bbs_title, bbs_pwd, bbs_cont, bbs_file, bbs_hit,
+                     bbs_ref, bbs_Step, bbs_level, bbs_date)
+    values (bbs_no_seq.nextval, #{bbs_name},
+            #{bbs_title}, #{bbs_pwd}, #{bbs_cont}, #{bbs_file}, 0, bbs_no_seq.nextval, 0, 0, sysdate)
+  </insert>
+  
+  <select id="bbs_count" resultType="int">
+    select count(bbs_no)
+    from bbs
+  </select>
+  
+  <!-- 시퀀스 번호값 구함 -->
+  <select id="bbsNoSeq_Find" resultType="int">
+    select bbs_no_seq.nextval
+    from dual
+  </select>
+  
+  <select id="bbs_list" resultType="bbs" parameterType="page">
+    select *
+    from (select rowNum rNum,
+                 bbs_no,
+                 bbs_name,
+                 bbs_title,
+                 bbs_hit,
+                 bbs_ref,
+                 bbs_step,
+                 bbs_level,
+                 bbs_date
+          from (select *
+                from bbs
+                order by bbs_ref desc, bbs_level asc))
+    where rNum &gt;= #{startrow} and rNum &lt;= ${endrow}
+  </select>
+</mapper>
