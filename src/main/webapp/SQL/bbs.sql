@@ -68,7 +68,22 @@ from (select rowNum rNum,
       from (select *
             from bbs
             order by bbs_ref desc, bbs_level asc))
-where rNum &gt =
-#{startrow} and rNum &lt
-=
-${endrow};
+where rNum >=
+1 and rNum <=
+10;
+
+select * from bbs order by bbs_no desc;
+
+update bbs SET bbs_hit = bbs_hit + 1 where bbs_no = 500;
+select bbs_cont from bbs where bbs_no=500;
+
+select * from bbs where bbs_ref = 502 and bbs_level > 0;
+
+update bbs set bbs_level = bbs_level + 1
+where bbs_ref=502 and bbs_level > 0;
+
+select * from bbs order by bbs_no desc;
+
+commit;
+
+delete from bbs where bbs_ref = 503;

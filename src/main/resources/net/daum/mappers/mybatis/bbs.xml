@@ -12,8 +12,17 @@
   </insert>
   
   <select id="bbs_count" resultType="int">
-    select count(bbs_no)
-    from bbs
+    select count(bbs_no) from bbs
+    <!-- 검색 조건 -->
+    <where>
+      <if test="find_field == ''"></if> <!-- 검색을 안한 경우: 총 레코드 개수 -->
+      <if test="find_field == 'bbs_title'"> <!-- 제목으로 검색한 경우 -->
+        bbs_title like #{find_name}
+      </if>
+      <if test="find_field == 'bbs_cont'"> <!-- 내용으로 검색한 경우 -->
+        bbs_cont like #{find_name}
+      </if>
+    </where>
   </select>
   
   <!-- 시퀀스 번호값 구함 -->
@@ -22,20 +31,69 @@
     from dual
   </select>
   
+  <!-- 검색전후 목록 -->
   <select id="bbs_list" resultType="bbs" parameterType="page">
     select *
     from (select rowNum rNum,
-                 bbs_no,
-                 bbs_name,
-                 bbs_title,
-                 bbs_hit,
-                 bbs_ref,
-                 bbs_step,
-                 bbs_level,
-                 bbs_date
-          from (select *
-                from bbs
-                order by bbs_ref desc, bbs_level asc))
-    where rNum &gt;= #{startrow} and rNum &lt;= ${endrow}
+    bbs_no,
+    bbs_name,
+    bbs_title,
+    bbs_hit,
+    bbs_ref,
+    bbs_step,
+    bbs_level,
+    bbs_date
+    from (select *
+    from bbs
+    
+    <!-- 검색 조건 -->
+    <where>
+      <if test="find_field == ''"></if> <!-- 검색을 안한 경우: 총 레코드 개수 -->
+      <if test="find_field == 'bbs_title'"> <!-- 제목으로 검색한 경우 -->
+        bbs_title like #{find_name}
+      </if>
+      <if test="find_field == 'bbs_cont'"> <!-- 내용으로 검색한 경우 -->
+        bbs_cont like #{find_name}
+      </if>
+    </where>
+    
+    order by bbs_ref desc, bbs_level asc))
+    where rNum &gt;= #{startrow}
+    and rNum &lt;= ${endrow}
   </select>
+  
+  <!-- 조회수 증가 -->
+  <update id="bbs_hi">
+    update bbs SET bbs_hit = bbs_hit + 1 where bbs_no = #{bbs_no}
+  </update>
+  
+  <!-- 내용보기 -->
+  <select id="bbs_co" resultType="bbs">
+    select * from bbs where bbs_no=#{bbs_no}
+  </select>
+  
+  <!-- 답변 레벨 증가 -->
+  <update id="levelUp">
+    update bbs set bbs_level = bbs_level + 1
+    where bbs_ref=#{bbs_ref} and bbs_level > #{bbs_level}
+  </update>
+  
+  <!-- 답변 저장 -->
+  <insert id="reply_in2">
+    insert into bbs
+        (bbs_no, bbs_name, bbs_title, bbs_pwd, bbs_cont, bbs_hit, bbs_ref, bbs_step, bbs_level, bbs_date)
+    values
+        (bbs_no_seq.nextval, #{bbs_name}, #{bbs_title}, #{bbs_pwd}, #{bbs_cont}, 0, #{bbs_ref}, #{bbs_step}+1, #{bbs_level}+1, sysdate)
+  </insert>
+  
+  <update id="bbs_edit" parameterType="bbs">
+    update bbs
+    set
+    bbs_name = #{bbs_name}, bbs_title = #{bbs_title}, bbs_cont = #{bbs_cont}, bbs_file = #{bbs_file}
+    where bbs_no = #{bbs_no}
+  </update>
+  
+  <delete id="bbs_del">
+    delete from bbs where bbs_no = #{bbs_no}
+  </delete>
 </mapper>
