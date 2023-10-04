@@ -87,3 +87,6 @@ select * from bbs order by bbs_no desc;
 commit;
 
 delete from bbs where bbs_ref = 503;
+
+
+select * from admin;

@@ -93,7 +93,7 @@
     where bbs_no = #{bbs_no}
   </update>
   
-  <delete id="bbs_del">
+  <delete id="bbs_del" parameterType="int">
     delete from bbs where bbs_no = #{bbs_no}
   </delete>
 </mapper>

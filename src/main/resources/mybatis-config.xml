@@ -8,5 +8,6 @@
     <!-- 이곳에서 Mybatis에서 사용할 빈클래스의 별칭을 관리-->
     <typeAlias type="net.daum.vo.BbsVO" alias="bbs" />
     <typeAlias type="net.daum.vo.PageVO" alias="page" />
+    <typeAlias type="net.daum.vo.AdminVO" alias="admin"/>
   </typeAliases>
 </configuration>
