@@ -24,4 +24,19 @@ public class AdminBbsDaoImpl implements AdminBbsDao{
     public List<BbsVO> getAdminBbsList(PageVO p) {
         return sqlSession.selectList("abbs_list", p);
     }//관리자 자료실 검색전후 목록
+
+    @Override
+    public void adminInsertBbs(BbsVO b) {
+        sqlSession.insert("abbs_in", b);
+    }
+
+    @Override
+    public BbsVO getAdminBbsCont(int no) {
+        return null;
+    }
+
+    @Override
+    public void adminUpdateBbs(BbsVO b) {
+
+    }
 }

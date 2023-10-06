@@ -2,8 +2,8 @@
 <!DOCTYPE mapper
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<mapper namespace="Admin_Bbs">
+  <!-- Admin_Bbs -->
+<mapper namespace="net.daum.dao.AdminBbsMapper">
   <select id="abbs_count" parameterType="page" resultType="int">
     select count(bbs_no) from bbs
     <where>
@@ -33,4 +33,12 @@
     order by bbs_ref desc, bbs_level asc))
     where rNum &gt;= #{startrow} and rNum &lt;= #{endrow}  <!-- &gt;은 > 의 뜻, &lt;은 <의 뜻 -->
   </select>
+  
+  <!-- 관리자 자료실 저장 -->
+  <insert id="abbs_in" parameterType="bbs">
+    insert into BBS
+    (bbs_no, bbs_name, bbs_title, bbs_pwd, bbs_cont, bbs_file, bbs_hit, bbs_ref, bbs_step, bbs_level, bbs_date)
+    values
+    (bbs_no_seq.nextval, #{bbs_name}, #{bbs_title}, #{bbs_pwd}, #{bbs_cont}, #{bbs_file}, 0, bbs_no_seq.nextval, 0, 0, sysdate)
+  </insert>
 </mapper>

@@ -10,7 +10,8 @@
 <link rel="stylesheet" type="text/css" href="./css/admin_bbs.css" />
 <link rel="stylesheet" type="text/css" href="./css/admin_member.css" />
 
-<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
 <script src="./js/bbs.js"></script>
 <script src="./js/gongji.js"></script>
 <script src="./js/board.js"></script>

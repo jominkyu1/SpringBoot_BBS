@@ -7,7 +7,6 @@ create table admin(
   ,admin_date date --등록날짜
   );
  
- select * from admin;
- 
+ select * from admin; 
  delete from admin;
  commit;
