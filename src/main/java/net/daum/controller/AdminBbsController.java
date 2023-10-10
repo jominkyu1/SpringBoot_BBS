@@ -284,12 +284,41 @@ public class AdminBbsController {
 			/* ModelAndView 스프링 api 생성자 인자값으로 2가지가 들어간다.
 			 *   1.화면에 보이는 뷰페이지 경로와 파일명
 			 *   2.redirect:/매핑주소 경로->새로운 매핑주소로 이동(레코드값이 저장 ,수정,삭제후 변경된
-			 *   레코드를 제대로 확인하기 위해서 사용한다.
+			 *   레코드를 제대로 확인하기 위해서 사용한다.)
 			 */
 			return em;//admin_bbs_list?page=쪽번호 가 get으로 전달된다.	
 		}
 		return null;
 	}//admin_bbs_edit_ok()
+	
+	//관리자 자료실 삭제
+	@RequestMapping("/admin_bbs_del")
+	public ModelAndView admin_bbs_del(int no,int page, HttpServletResponse response,
+			HttpServletRequest request,HttpSession session) throws Exception{
+		response.setContentType("text/html;charset=UTF-8");
+		
+		if(isAdminLogin(session, response)) {
+			String saveFolder = request.getRealPath("upload");
+			BbsVO db_file = this.adminBbsService.getAdminBbsCont(no);
+			
+			if(db_file.getBbs_file() != null) {//기존 첨부파일이 있는 경우
+				File delFile = new File(saveFolder+db_file.getBbs_file());//삭제할 파일
+				//객체 생성
+				delFile.delete();//폴더는 삭제 안되고 기존 첨부파일만 삭제
+			}
+			this.adminBbsService.adminBbsDel(no);//번호를 기준으로 삭제
+			/* 문제) 번호를 기준으로 삭제되게 만든다. mybatis 매퍼태그 유일 아이디명은 abbs_del이다. 
+			 */
+			
+			
+			ModelAndView dm=new ModelAndView();
+			dm.setViewName("redirect:/admin_bbs_list");
+			dm.addObject("page",page);
+			return dm;//admin_bbs_list?page=쪽번호로 주소창에 노출되는 get방식으로 관리자 목록보기
+			//매핑주소로 이동(새로운 매핑주소로 이동)
+		}
+		return null;
+	}//admin_bbs_del()
 	
 	//반복적인 관리자 로그인을 안하기 위한 코드 추가
 	public static boolean isAdminLogin(HttpSession session, HttpServletResponse 

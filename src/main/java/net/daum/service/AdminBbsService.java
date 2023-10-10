@@ -12,5 +12,6 @@ public interface AdminBbsService {
 	void adminInsertBbs(BbsVO b);
 	BbsVO getAdminBbsCont(int no);
 	void adminUpdateBbs(BbsVO b);
+	void adminBbsDel(int no);
 
 }

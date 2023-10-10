@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.daum.dao.AdminBbsDao;
+import net.daum.dao.AdminBbsDAO;
 import net.daum.vo.BbsVO;
 import net.daum.vo.PageVO;
 
@@ -13,7 +13,7 @@ import net.daum.vo.PageVO;
 public class AdminBbsServiceImpl implements AdminBbsService {
 
 	@Autowired
-	private AdminBbsDao adminBbsDao;
+	private AdminBbsDAO adminBbsDao;
 
 	@Override
 	public int getListCount(PageVO p) {
@@ -38,5 +38,10 @@ public class AdminBbsServiceImpl implements AdminBbsService {
 	@Override
 	public void adminUpdateBbs(BbsVO b) {
 		this.adminBbsDao.adminUpdateBbs(b);		
+	}
+
+	@Override
+	public void adminBbsDel(int no) {
+	    this.adminBbsDao.adminBbsDel(no);		
 	}	
 }
