@@ -1,7 +1,10 @@
 package net.daum.dao;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+
+import javax.transaction.Transactional;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +57,83 @@ public class MemberDAOImpl implements MemberDAO {
 		m.setMem_state(1);//가입 회원일때 1 저장
 		this.memberRepo.save(m);
 	}//회원저장
+
+	@Override
+	public MemberVO pwdMember(MemberVO m) {
+		//return this.sqlSession.selectOne("p_find", m);
+		
+		System.out.println(" \n ==============> 비번검색(JPA)");
+		MemberVO pm = this.memberRepo.pwdFind(m.getMem_id(), m.getMem_name());
+		return pm;
+	}//비번 찾기 => 아이디와 회원이름을 기준으로 회원정보 검색
+
+	@Transactional //javax.persistence.TransactionRequiredException: Executing an
+	//update/delete query 에러가 발생하기 때문에 @Transactional을 해줘야 에러가 발생하지 않는다.
+	@Override
+	public void updatePwd(MemberVO m) {
+		//this.sqlSession.update("p_edit", m);	
+		
+		System.out.println(" \n =============> 암호화 된 임시비번으로 수정(JPA)");
+		this.memberRepo.updatePwd(m.getMem_pwd(), m.getMem_id());
+	}//암호화 된 임시비번으로 수정
+
+	@Override
+	public MemberVO loginCheck(String login_id) {
+		//return this.sqlSession.selectOne("m_loginCheck",login_id);
+		
+	    System.out.println(" \n ==============> 아이디와 mem_state=1 인 경우만 "
+			+"로그인 인증처리(JPA)");
+	    
+	    MemberVO m = this.memberRepo.loginCheck(login_id);
+	    return m;
+	}//로그인 인증 처리
+
+	@Override
+	public MemberVO getMember(String id) {
+		//return this.sqlSession.selectOne("member_Info",id);
+		
+		System.out.println(" \n =================> 아이디에 대한 회원정보 보기(회원수정폼에 활용"
+				+": 이 경우는 반드시 로그인 된 상태에서 하기 때문에 null이 반환될 일이 없다. 내장메서드 "
+				+" getReferenceById()를 사용");
+		
+		MemberVO em=this.memberRepo.getReferenceById(id);
+		return em;
+	}//회원정보 보기=>정보수정폼
+
+	@Transactional
+	@Override
+	public void updateMember(MemberVO m) {
+	   //this.sqlSession.update("medit_ok",m);		
+		
+	   System.out.println(" \n ==================> 회원정보 수정완료(jpa)");
+	   this.memberRepo.updateMember(m.getMem_pwd(), m.getMem_name(), m.getMem_zip(),
+			   m.getMem_zip2(),m.getMem_addr(),m.getMem_addr2(),m.getMem_phone01(),
+			   m.getMem_phone02(),m.getMem_phone03(),m.getMail_id(),m.getMail_domain(),
+			   m.getMem_id());
+	}//회원정보 수정완료
+
+	@Override
+	public void delMem(MemberVO dm) {
+	   //this.sqlSession.update("mDel_ok", dm);		
+		
+	   System.out.println(" \n =================> JPA로 회원탈퇴");
+	   Optional<MemberVO> mResult = this.memberRepo.findById(dm.getMem_id());
+	   /* java 8에서 Optional을 사용하는 이유는 null 처리를 해결하기 위한 Wrapper클래스이다.
+	    * null이면 NullPointerException 예외처리를 하기 위해서 try~catch문등을 사용해야 한다. 이런
+	    * 부분을 해결해 준다.
+	    */
+	   MemberVO member;
+	   if(mResult.isPresent()) {//아이디에 해당하는 회원정보가 있다면 참
+		   member=mResult.get();//MemberVO 엔티티 타입 객체를 구함
+		   
+		   member.setMem_delcont(dm.getMem_delcont());//탈퇴사유 저장
+		   member.setMem_state(2);//탈퇴회원 구분값 2 저장
+		   member.setMem_deldate(new Timestamp(System.currentTimeMillis()));//탈퇴날짜 
+		   //저장
+		   
+		   this.memberRepo.save(member);
+	   }
+	}//회원 탈퇴
 }
 
 

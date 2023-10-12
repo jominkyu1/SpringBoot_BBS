@@ -3,14 +3,17 @@ package net.daum.controller;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import net.daum.pwdconv.PwdChange;
@@ -115,6 +118,217 @@ public class MemberController {//사용자 회원관리
     	return new ModelAndView("redirect:/member_login");//생성자 인자값에 redirect:/가
     	//들어가면 원하는 매핑주소로 이동시킴.
     }//member_join_ok()
+    
+    //비번찾기 공지창
+    @RequestMapping("/pwd_find")
+    public ModelAndView pwd_find() {
+    	return new ModelAndView("member/pwd_find");//생성자 인자값으로 뷰페이지 경로 설정 =>
+    	// /WEB-INF/views/member/pwd_find.jsp
+    }//pwd_find()
+    
+    //비번찾기 결과
+    @RequestMapping("/pwd_find_ok")
+    public ModelAndView pwd_find_ok(@RequestParam("pwd_id") String pwd_id,
+    		 String pwd_name,HttpServletResponse response,MemberVO m) 
+    throws Exception{
+    	/*  @RequestParam("pwd_id")는 request.getParameter("pwd_id")와 같은 역할을 한다.   	 * 
+    	 */
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	
+    	m.setMem_id(pwd_id); m.setMem_name(pwd_name);
+    	MemberVO pm = this.memberService.pwdMember(m);
+    	/* 문제)아이디와 회원이름을 기준으로 회원정보를 오라클로 부터 검색하는 pwdMember()메서드를 작성해
+    	 * 본다. member.xml에 설정하는 유일아이디명은 p_find이다. 
+    	 */
+    	
+    	if(pm == null) {
+    		out.println("<script>");
+    		out.println("alert('회원으로 검색되지 않습니다!\\n 올바른 회원정보를 입력하세요!');");
+    		out.println("history.go(-1);");
+    		out.println("</script>");
+    	}else {
+    		//System.out.println("오라클로 부터 검색된 회원:"+pm.getMem_name());
+    		
+    		Random r=new Random();
+    		int pwd_random=r.nextInt(100000);//0이상 십만 미만 사이의 정수 숫자 난수가 발생
+    		String ran_pwd=Integer.toString(pwd_random);//정수숫자를 문자열로 변경
+    		m.setMem_pwd(PwdChange.getPassWordToXEMD5String(ran_pwd));//임시 비번 암호화
+    		
+    		this.memberService.updatePwd(m);//암호화 된 임시비번으로 수정
+    		
+    		ModelAndView fm=new ModelAndView("member/pwd_find_ok");
+    		fm.addObject("pwd_ran", ran_pwd);
+    		return fm;
+    	}
+    	return null;
+    }//pwd_find_ok()
+    
+    //로그인 인증처리
+    @PostMapping("/member_login_ok")
+    public ModelAndView member_login_ok(String login_id,String login_pwd,
+    		HttpServletResponse response,HttpSession session) throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	
+    	MemberVO m = this.memberService.loginCheck(login_id);
+    	/* 문제) 아이디와 mem_state=1 가입회원 인 경우만 로그인 인증 처리를 한다. member.xml에서 설정할
+    	 * 유일 아이디명은 m_loginCheck이다. 단위테스트인 개발자 테스트까지 마무리 한다.
+    	 */
+    	
+    	if(m == null) {
+    		out.println("<script>");
+    		out.println("alert('가입 안된 회원입니다!');");
+    		out.println("history.back();");
+    		out.println("</script>");
+    	}else {
+    		if(!m.getMem_pwd().equals(PwdChange.getPassWordToXEMD5String(login_pwd))) {
+    			out.println("<script>");
+    			out.println("alert('비번이 다릅니다!');");
+    			out.println("history.go(-1);");
+    			out.println("</script>");
+    		}else {
+    			session.setAttribute("id",login_id);//세션 id 키이름에 아이디 저장
+    			return new ModelAndView("redirect:/member_login");
+    		}
+    	}
+    	return null;
+    }//member_login_ok()
+    
+    //로그아웃
+    @PostMapping("/member_logout")
+    public ModelAndView member_logout(HttpServletResponse response,
+    		HttpSession session) throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	
+    	session.invalidate();//세션 만료(로그아웃)
+    	
+    	out.println("<script>");
+    	out.println("alert('로그아웃 되었습니다!');");
+    	out.println("location='member_login';");
+    	out.println("</script>");
+    	
+    	return null;
+    }//member_logout()
+    
+    //회원 정보수정
+    @GetMapping("/member_edit")
+    public ModelAndView member_edit(HttpServletResponse response,HttpSession session)
+    throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	String id = (String)session.getAttribute("id");//세션 아이디를 구함
+    	
+    	if(isLogin(session,response)) {//==true가 생략됨
+    		String[] phone= {"010","011","019"};
+    		String[] email = {"gmail.com","naver.com","daum.net","nate.com","직접입력"};
+    		MemberVO em = this.memberService.getMember(id);//아이디에 해당하는 회원정보를 읽어옴
+            /* 문제) 아이디를 기준으로 member테이블로 부터 회원정보를 검색한다. member.xml에서 설정할
+             * 유일 아이디명은 member_Info로 한다. 개발자 테스트인 단위테스트까지 해보자.
+             */
+    		
+    		ModelAndView m = new ModelAndView("member/member_Edit");
+    		m.addObject("em", em);
+    		m.addObject("phone",phone);
+    		m.addObject("email",email);
+    		return m;
+    	}
+    	return null;
+    }//member_edit()
+    
+    
+    //정보수정 완료
+    @RequestMapping("/member_update_ok")
+    public ModelAndView member_update_ok(MemberVO m,HttpServletResponse response,
+    		HttpSession session) throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	
+    	String id=(String)session.getAttribute("id");
+    	
+    	if(isLogin(session, response)) {
+    		m.setMem_id(id);
+    		m.setMem_pwd(PwdChange.getPassWordToXEMD5String(m.getMem_pwd()));//정식 비번
+    		//암호화
+    		
+    		this.memberService.updateMember(m);// 회원정보 수정
+    		
+    		out.println("<script>");
+    		out.println("alert('정보 수정했습니다!');");
+    		out.println("location='member_edit';");
+    		out.println("</script>");
+    	}
+    	return null;
+    }//member_update_ok()
+    
+    //회원탈퇴 폼
+    @RequestMapping("/member_del")
+    public ModelAndView member_del(HttpServletResponse response,HttpSession session)
+    throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	String id=(String)session.getAttribute("id");//세션 아이디를 구함.
+    	
+    	if(isLogin(session, response)) {
+    		MemberVO dm = this.memberService.getMember(id);
+    		
+    		ModelAndView m=new ModelAndView("member/member_Del");
+    		m.addObject("dm",dm);
+    		return m;
+    	}
+    	return null;
+    }//member_del()
+    
+    //회원탈퇴 완료
+    @RequestMapping("/member_del_ok")
+    public ModelAndView member_del_ok(HttpServletResponse response,HttpSession session,
+    		String del_pwd,String del_cont) throws Exception{
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out=response.getWriter();
+    	String id=(String)session.getAttribute("id");
+    	
+    	if(isLogin(session, response)) {
+    		del_pwd = PwdChange.getPassWordToXEMD5String(del_pwd);//비번 암호화
+    		MemberVO db_pwd = this.memberService.getMember(id);
+    		
+    		if(!db_pwd.getMem_pwd().equals(del_pwd)) {
+    			out.println("<script>");
+    			out.println("alert('비번이 다릅니다!');");
+    			out.println("history.back();");
+    			out.println("</script>");
+    		}else {
+    			MemberVO dm=new MemberVO();
+    			dm.setMem_id(id); dm.setMem_delcont(del_cont);
+    			
+    			this.memberService.delMem(dm);//회원탈퇴
+    			
+    			session.invalidate();//세션만료=>로그아웃
+    			
+    			out.println("<script>");
+    			out.println("alert('회원탈퇴 했습니다!');");
+    			out.println("location='member_login';");
+    			out.println("</script>");
+    		}
+    	}
+    	return null;
+    }//member_del_ok()
+    
+    //반복적인 코드 줄이기
+    public static boolean isLogin(HttpSession session,HttpServletResponse response)
+    throws Exception{
+    	PrintWriter out = response.getWriter();
+    	String id=(String)session.getAttribute("id");
+    	
+    	if(id == null) {
+    		out.println("<script>");
+    		out.println("alert('다시 로그인 하세요!');");
+    		out.println("location='member_login';");
+    		out.println("</script>");
+    		
+    		return false;
+    	}
+    	return true;
+    }//isLogin()
 }
 
 
